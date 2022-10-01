@@ -9,23 +9,36 @@
 #include <iostream>
 #include <list>
 #include <fstream>
+#include "Secuencia.h"
 
 namespace archivo_secuencia {
 
-    template<class T, class U>
+    template<class T, class V>
     class ArchivoSecuencia {
     private:
         std::list<T> lista_archivo_secuencias_;
-        std::list<U> lista_archivo_grafos_;
-        int cantidad_sec_;
+        int cantidad_sec_{};
         std::string nombre_archivo_;
-
-        bool ExisteArchivoBool(std::string const &name);
+        bool archivo_vacio = true;
 
     public:
         ArchivoSecuencia();
 
-        ArchivoSecuencia(std::string nombre_archivo);
+        void ExportarFa();
+
+        std::string NombreArchivo();
+
+        ~ArchivoSecuencia();
+
+        void Imprimir();
+
+        void ExportarTxt(std::string nombre_archivo);
+
+        int EsSubsecuencia(std::string subsecuencia);
+
+        int Enmascarar(std::string mascara);
+
+        explicit ArchivoSecuencia(const std::string &nombre_archivo);
 
     };
 
