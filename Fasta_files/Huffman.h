@@ -7,10 +7,13 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <map>
+#include <vector>
 
 
 class Huffman {
 private:
+    std::map<char, std::vector<int>> mapeo;
     struct HuffmanNode {
         unsigned frecuencia_;
         char codigo_;
@@ -138,9 +141,13 @@ private:
             printCodes(root->right, arr, top + 1);
         }
         if (isLeaf(root)) {
-            std::cout << root->codigo_ << ": ";
-            printArr(arr, top);
-
+            int n = sizeof(arr) / sizeof(arr[0]) + 1;
+            std::vector<int> vecint;
+            for (int i = 0; i < top; ++i) {
+                vecint.push_back(arr[i]);
+            }
+            std::vector<int> dest(arr, arr + n);
+            this->mapeo.emplace(root->codigo_, vecint);
         }
     }
 
@@ -162,8 +169,8 @@ public:
         printCodes(root, arr, top);
     }
 
-    Huffman() {
-
+    std::map<char, std::vector<int>> MapHuffman() {
+        return this->mapeo;
     }
 
 

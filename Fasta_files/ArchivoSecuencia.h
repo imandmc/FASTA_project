@@ -10,6 +10,8 @@
 #include <list>
 #include <fstream>
 #include "Secuencia.h"
+#include <map>
+#include "Huffman.h"
 
 namespace archivo_secuencia {
 
@@ -20,6 +22,8 @@ namespace archivo_secuencia {
         int cantidad_sec_{};
         std::string nombre_archivo_;
         bool archivo_vacio = true;
+        std::list<char> lista_bases_ = {'A', 'C', 'G', 'T', 'U', 'R', 'Y', 'K', 'M', 'S', 'W', 'B', 'D', 'H', 'V', 'N',
+                                        'X', '-', '\n'};
 
     public:
         ArchivoSecuencia();
@@ -38,7 +42,14 @@ namespace archivo_secuencia {
 
         int Enmascarar(std::string mascara);
 
+        int Enmascarar(std::string mascara, std::string enmascara);
+
         explicit ArchivoSecuencia(const std::string &nombre_archivo);
+
+        void HuffmanEncodder();
+
+        std::map<char, int> Mapeo();
+
 
     };
 
