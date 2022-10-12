@@ -1,0 +1,124 @@
+import pandas as pd
+from itertools import combinations
+import random as rd
+
+
+class TabuSearch:
+    def __init__(self, path, seed, list_tenure):
+        self.Path = path
+        self.seed = seed
+        self.list_tenure = list_tenure
+        self.instance_dict = self.input()
+        self.initial_solution = self.init_solution()
+        self.tabu_str, self.Best_solution, self.Best_objvalue = self.t_search
+
+    def input(self):
+        return pd.read_excel(self.Path, names=['Job', 'weight', 'processing_time', 'due_time'], index_col=0).to_dict(
+            'index')
+
+    def init_structure(self):
+        dict_init = {}
+        for swap in combinations(self.instance_dict.keys(), 2):
+            dict_init[swap] = {'time': 0, 'move': 0}
+        return dict_init
+
+    def init_solution(self, show=False):
+        n_jobs = len(self.instance_dict)
+        solution = list(range(1, n_jobs + 1))
+        rd.seed(self.seed)
+        rd.shuffle(solution)
+        if show:
+            print("initial Random Solution: {}".format(solution))
+        return solution
+
+    def score(self, solution, show=False):
+        dict_score = self.instance_dict
+        t = 0
+        score_value = 0
+        for job in solution:
+            processing_time = t + dict_score[job]["processing_time"]
+            due_time = dict_score[job]["due_time"]
+            tardiness_time = max(0, processing_time - due_time)
+            weights = dict_score[job]["weight"]
+            score_value += weights * tardiness_time
+            t = processing_time
+        if show:
+            print("\n", "#" * 10,
+                  "El puntaje obtenido por la solución {} es : {}".format(solution, score_value),
+                  "#" * 8)
+        return score_value
+
+    @staticmethod
+    def swap(solution, i, j):
+        solution = solution.copy()
+        i_index = solution.index(i)
+        j_index = solution.index(j)
+        solution[i_index], solution[j_index] = solution[j_index], solution[i_index]
+        return solution
+
+    @property
+    def t_search(self):
+        tenure = self.list_tenure
+        tabu_structure = self.init_structure()
+        best_solution = self.initial_solution
+        best_objvalue = self.score(best_solution)
+        current_solution = self.initial_solution
+        current_objvalue = self.score(current_solution)
+
+        print("#" * 30, "Short-term memory TS with Tabu Tenure: {}\nInitial Solution: {}, Initial Score: {}".format(
+            tenure, current_solution, current_objvalue), "#" * 30, sep='\n\n')
+        iter = 1
+        Terminate = 0
+        while Terminate < 100:
+            print('\n\n### iter {}###  Current_Objvalue: {}, Best_Score: {}'.format(iter, current_objvalue,
+                                                                                       best_objvalue))
+            for move in tabu_structure:
+                candidate_solution = self.swap(current_solution, move[0], move[1])
+                candidate_objvalue = self.score(candidate_solution)
+                tabu_structure[move]['move'] = candidate_objvalue
+
+            while True:
+                best_move = min(tabu_structure, key=lambda x: tabu_structure[x]['move'])
+                move = tabu_structure[best_move]["move"]
+                time = tabu_structure[best_move]["time"]
+                # Not Tabu
+                if time < iter:
+                    # make the move
+                    current_solution = self.swap(current_solution, best_move[0], best_move[1])
+                    current_objvalue = self.score(current_solution)
+                    if move < best_objvalue:
+                        best_solution = current_solution
+                        best_objvalue = current_objvalue
+                        print("   best_move: {}, Score: {} => Best Improving => Admissible".format(best_move,
+                                                                                                      current_objvalue))
+                        Terminate = 0
+                    else:
+                        print("   ##Termination: {}## best_move: {}, Score: {} => Least non-improving => "
+                              "Admissible".format(Terminate, best_move,
+                                                  current_objvalue))
+                        Terminate += 1
+                    tabu_structure[best_move]['time'] = iter + tenure
+                    iter += 1
+                    break
+                else:
+                    # Aspiration
+                    if move < best_objvalue:
+                        current_solution = self.swap(current_solution, best_move[0], best_move[1])
+                        current_objvalue = self.score(current_solution)
+                        best_solution = current_solution
+                        best_objvalue = current_objvalue
+                        print("   best_move: {}, Score: {} => Aspiration => Admissible".format(best_move,
+                                                                                                  current_objvalue))
+                        Terminate = 0
+                        iter += 1
+                        break
+                    else:
+                        tabu_structure[best_move]["move"] = float('inf')
+                        print("   best_move: {}, Score: {} => Tabu => Inadmissible".format(best_move,
+                                                                                              current_objvalue))
+                        continue
+        print('#' * 50, "Performed iterations: {}".format(iter),
+              "Best found Solution: {} , Score: {}".format(best_solution, best_objvalue), sep="\n")
+        return tabu_structure, best_solution, best_objvalue
+
+test = TabuSearch(path="Data_instances/Instance_20.xlsx", seed = 42, list_tenure=3)
