@@ -17,6 +17,7 @@ namespace _secuencia {
         std::list<V> lista_grafos_;
         std::string nombre_secuencia_;
         bool secuencia_correcta = true;
+        int longitud_secuencia = 0;
     public:
         Secuencia();
 
@@ -43,6 +44,12 @@ namespace _secuencia {
         std::list<std::string> ListaSecuencia();
 
         void ActualizarListaSecuencia(std::list<std::string> nueva_lista);
+
+        int longitud_max();
+
+        int identation();
+
+        void ActualizarLongitud(int longitud);
     };
 
     template<class V>
@@ -55,6 +62,7 @@ namespace _secuencia {
 
     template<class V>
     void Secuencia<V>::AgregarLinea(std::string linea) {
+        int temp_max = linea.length();
         std::string::const_iterator it = linea.begin();
         while (it != linea.end() && CodigoValido(*it)) {
             ++it;
@@ -62,6 +70,7 @@ namespace _secuencia {
         if (!linea.empty() && it == linea.end()) {
             lista_secuencia_.push_back(linea);
         }
+        if (temp_max > this->longitud_secuencia) this->longitud_secuencia = temp_max;
     }
 
     template<class V>
@@ -127,6 +136,22 @@ namespace _secuencia {
     template<class V>
     void Secuencia<V>::ActualizarListaSecuencia(std::list<std::string> nueva_lista) {
         this->lista_secuencia_ = nueva_lista;
+    }
+
+    template<class V>
+    int Secuencia<V>::longitud_max() {
+        return this->longitud_secuencia;
+    }
+
+    template<class V>
+    int Secuencia<V>::identation() {
+        int identation_ = lista_secuencia_.size();
+        return identation_;
+    }
+
+    template<class V>
+    void Secuencia<V>::ActualizarLongitud(int longitud) {
+        this->longitud_secuencia = longitud;
     }
 
 

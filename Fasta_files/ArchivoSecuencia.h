@@ -23,12 +23,14 @@ namespace archivo_secuencia {
         std::string nombre_archivo_;
         bool archivo_vacio = true;
         std::list<char> lista_bases_ = {'A', 'C', 'G', 'T', 'U', 'R', 'Y', 'K', 'M', 'S', 'W', 'B', 'D', 'H', 'V', 'N',
-                                        'X', '-', '\n'};
+                                        'X', '-'};
+        int cantidad_bases_archivo_ = 0;
+        std::map<char, std::vector<int>> mapa_;
+        std::map<char, int> mapa_freq_;
 
     public:
         ArchivoSecuencia();
 
-        void ExportarFa();
 
         std::string NombreArchivo();
 
@@ -46,11 +48,15 @@ namespace archivo_secuencia {
 
         explicit ArchivoSecuencia(const std::string &nombre_archivo);
 
+        explicit ArchivoSecuencia(const std::string &nombre_archivo, const int &bin_opcion);
+
         void HuffmanEncodder();
 
         std::map<char, int> Mapeo();
 
+        void alistadorSaveFile(std::string nombre_archivo);
 
+        void HuffmanEncodder(std::map<char, int> mapa);
     };
 
 

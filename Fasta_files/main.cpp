@@ -12,5 +12,7 @@ int main() {
     archivo_secuencia::ArchivoSecuencia<_secuencia::Secuencia<int>, int> Archivo1(nombrees);
     Archivo1.ExportarTxt("Holap11.txt");
     Archivo1.HuffmanEncodder();
-    Archivo1.ExportarTxt("Holapbinario.txt");
+    Archivo1.alistadorSaveFile("Holap.bin");
+    archivo_secuencia::ArchivoSecuencia<_secuencia::Secuencia<int>, int> Archivo2("Holap.bin", 1);
+    Archivo2.ExportarTxt("HolapELDOS.txt");
 }

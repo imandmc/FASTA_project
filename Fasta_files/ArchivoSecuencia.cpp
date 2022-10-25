@@ -7,6 +7,7 @@
 #include <list>
 #include <regex>
 #include <sstream>
+#include <string>
 
 
 namespace archivo_secuencia {
@@ -80,13 +81,6 @@ namespace archivo_secuencia {
 
         std::cout << "Archivo " << this->nombre_archivo_ << " leído, " << this->cantidad_sec_
                   << " secuencias encontradas." << std::endl;
-    }
-
-    template<class T, class V>
-    void ArchivoSecuencia<T, V>::ExportarFa() {
-        std::ofstream file_obj;
-        file_obj.open("export.fa", std::ios::binary);
-        file_obj.write((char *) this, sizeof(this));
     }
 
     template<class T, class V>
@@ -216,13 +210,12 @@ namespace archivo_secuencia {
     }
 
     template<class T, class V>
-    void ArchivoSecuencia<T, V>::HuffmanEncodder() {
-        std::map<char, int> mapa = this->Mapeo();
+    void ArchivoSecuencia<T, V>::HuffmanEncodder(std::map<char, int> mapa) {
         typename std::list<_secuencia::Secuencia<V>>::iterator it;
         std::list<std::string>::iterator its;
         int sizes = mapa.size() + 1;
-        char char_array[sizes];
-        int frecuencia_array[sizes];
+        char char_array[sizes - 1];
+        int frecuencia_array[sizes - 1];
         for (it = this->lista_archivo_secuencias_.begin();
              it != this->lista_archivo_secuencias_.end(); ++it) {
             std::list<std::string> lista_string;
@@ -231,7 +224,7 @@ namespace archivo_secuencia {
                 std::string aux;
                 auto iter = mapa.begin();
                 while (iter != mapa.end()) {
-                    for (int i = 0; i < sizes - 1; i++, iter++) {
+                    for (int i = 0; i < (sizes - 1); i++, iter++) {
                         char_array[i] = iter->first;
                         frecuencia_array[i] = iter->second;
                     }
@@ -251,7 +244,15 @@ namespace archivo_secuencia {
             int contador = this->Enmascarar(enmasca_imput, mascara_imput);
             ++iterHuff;
         }
+        this->mapa_ = HuffmanOutMap;
     }
+
+    template<class T, class V>
+    void ArchivoSecuencia<T, V>::HuffmanEncodder() {
+        std::map<char, int> mapa = this->Mapeo();
+        HuffmanEncodder(mapa);
+    }
+
 
     template<class T, class V>
     std::map<char, int> ArchivoSecuencia<T, V>::Mapeo() {
@@ -263,10 +264,191 @@ namespace archivo_secuencia {
             std::string entrada(1, *it);
             freq_contador = EsSubsecuencia(entrada);
             if (freq_contador > 0) {
+                this->cantidad_bases_archivo_++;
                 mapa.emplace(*it, freq_contador);
             }
         }
+        this->mapa_freq_ = mapa;
         return mapa;
+    }
+
+
+    template<class T, class V>
+    void ArchivoSecuencia<T, V>::alistadorSaveFile(std::string nombre_archivo) {
+        std::ofstream outputBIN(nombre_archivo, std::ios::out | std::ios::binary);
+        int16_t bases_int_ = this->cantidad_bases_archivo_;
+        outputBIN.write(reinterpret_cast<const char *>(&bases_int_), sizeof(bases_int_));
+        std::map<char, int> mapa_frecuencias = this->mapa_freq_;
+        std::map<int, int> mapa_frecuencias_ascii;
+        auto iter1 = mapa_frecuencias.begin();
+        while (iter1 != mapa_frecuencias.end()) {
+            mapa_frecuencias_ascii.emplace(int(iter1->first), iter1->second);
+            iter1++;
+        }
+        auto iter2 = mapa_frecuencias_ascii.begin();
+        while (iter2 != mapa_frecuencias_ascii.end()) {
+            int8_t ascii_code = iter2->first;
+            int64_t frec_code = iter2->second;
+            outputBIN.write(reinterpret_cast<const char *>(&ascii_code), sizeof(ascii_code));
+            outputBIN.write(reinterpret_cast<const char *>(&frec_code), sizeof(frec_code));
+            iter2++;
+        }
+        int32_t cantidad_secuencias_ = this->cantidad_sec_;
+        outputBIN.write(reinterpret_cast<const char *>(&cantidad_secuencias_), sizeof(cantidad_secuencias_));
+        auto listiterator = this->lista_archivo_secuencias_.begin();
+        for (listiterator; listiterator != this->lista_archivo_secuencias_.end(); ++listiterator) {
+            std::string nombre_temp = listiterator->NombreSecuencia();
+            int longitud_nombre = nombre_temp.length();
+            int16_t longitud_nombre_ = longitud_nombre;
+            outputBIN.write(reinterpret_cast<const char *>(&longitud_nombre_), sizeof(longitud_nombre_));
+            for (auto it3 = nombre_temp.begin(); it3 != nombre_temp.end(); ++it3) {
+                char char_nombre = *it3;
+                outputBIN.write(reinterpret_cast<const char *>(&char_nombre), sizeof(char_nombre));
+            }
+            int64_t longitud_ = listiterator->longitud_max();
+            int16_t identation_ = listiterator->identation();
+            outputBIN.write(reinterpret_cast<const char *>(&longitud_), sizeof(longitud_));
+            outputBIN.write(reinterpret_cast<const char *>(&identation_), sizeof(identation_));
+            std::list<std::string> lista_i = listiterator->ListaSecuencia();
+            auto secuenciait = lista_i.begin();
+            for (secuenciait; secuenciait != lista_i.end(); secuenciait++) {
+                int16_t contador_ = 0;
+                int16_t ceros_ = 0;
+                std::string linea_in = *secuenciait;
+                int N = linea_in.size();
+                int j = 0, i = 0;
+                std::vector<std::string> result;
+                std::string res = "";
+                while (j < N) {
+                    res += linea_in[j];
+                    if (res.size() == 63) {
+                        result.push_back(res);
+                        contador_++;
+                        res = "";
+                    }
+                    j++;
+                }
+                if (res != "") {
+                    while (res.size() < 63) {
+                        res += "0";
+                        ceros_++;
+                    }
+                    result.push_back(res);
+                    contador_++;
+                }
+                outputBIN.write(reinterpret_cast<const char *>(&contador_), sizeof(contador_));
+                outputBIN.write(reinterpret_cast<const char *>(&ceros_), sizeof(ceros_));
+                for (auto i_: result) {
+                    i_.insert(0, "1");
+                    std::bitset<sizeof(unsigned long) * 8> bits(i_);
+                    unsigned long binary_value = bits.to_ulong();
+                    outputBIN.write(reinterpret_cast<const char *>(&binary_value), sizeof(unsigned long));
+                }
+            }
+        }
+        outputBIN.close();
+    }
+
+    template<class T, class V>
+    ArchivoSecuencia<T, V>::ArchivoSecuencia(const std::string &nombre_archivo, const int &bin_opcion) {
+        nombre_archivo_ = nombre_archivo;
+        std::ifstream infile(nombre_archivo, std::ios::in | std::ios::binary);
+        int16_t cantidad_bases_in = 0;
+        infile.read((char *) &cantidad_bases_in, sizeof(cantidad_bases_in));
+        this->cantidad_bases_archivo_ = cantidad_bases_in;
+        std::map<int, int> mapa_frecuencias_ascii;
+        for (int i = 1; i <= cantidad_bases_in; i++) {
+            int8_t ascii_code_in = 0;
+            int64_t code_freq_in = 0;
+            infile.read((char *) &ascii_code_in, sizeof(ascii_code_in));
+            infile.read((char *) &code_freq_in, sizeof(code_freq_in));
+            mapa_frecuencias_ascii.emplace(int(ascii_code_in), int(code_freq_in));
+        }
+        auto iter_map = mapa_frecuencias_ascii.begin();
+        int size_map = mapa_frecuencias_ascii.size();
+        char char_array[size_map];
+        int frecuencia_array[size_map];
+        while (iter_map != mapa_frecuencias_ascii.end()) {
+            for (int i = 0; i < (size_map); i++, iter_map++) {
+                char_array[i] = char(iter_map->first);
+                frecuencia_array[i] = iter_map->second;
+            }
+        }
+        Huffman huff_2;
+        huff_2.HuffmanEncoding(char_array, frecuencia_array, sizeof(char_array) / sizeof(char_array[0]));
+        int32_t cantidad_sec_in = 0;
+        infile.read((char *) &cantidad_sec_in, sizeof(cantidad_sec_in));
+        std::list<_secuencia::Secuencia<V>> list_secuencias_in;
+        typename std::list<_secuencia::Secuencia<V>>::iterator it_ls;
+        this->cantidad_sec_ = cantidad_sec_in;
+        for (int j = 1; j <= cantidad_sec_in; j++) {
+            _secuencia::Secuencia<V> secuencia_in;
+            std::string nombre_sec_in;
+            int16_t longitud_nombre_in = 0;
+            infile.read((char *) &longitud_nombre_in, sizeof(longitud_nombre_in));
+            for (int k = 1; k <= longitud_nombre_in; k++) {
+                char char_in;
+                infile.read((char *) &char_in, sizeof(char_in));
+                nombre_sec_in.push_back(char_in);
+            }
+            secuencia_in.AsignarNombre(nombre_sec_in);
+            int64_t longitud_lineas;
+            infile.read((char *) &longitud_lineas, sizeof(longitud_lineas));
+            int16_t identation_lineas;
+            infile.read((char *) &identation_lineas, sizeof(identation_lineas));
+            std::list<std::string> lista_filas;
+            for (int x = 1; x <= identation_lineas; x++) {
+                std::string linea_final_in = "";
+                int16_t lineas_packs = 0;
+                int16_t ceros_pack = 0;
+                infile.read((char *) &lineas_packs, sizeof(lineas_packs));
+                infile.read((char *) &ceros_pack, sizeof(ceros_pack));
+                for (int i_ = 1; i_ <= lineas_packs; i_++) {
+                    unsigned long bin_value;
+                    infile.read((char *) &bin_value, sizeof(bin_value));
+                    std::string binary_line = std::bitset<sizeof(unsigned long) * 8>(bin_value).to_string();
+                    binary_line = binary_line.substr(1, binary_line.size());
+                    linea_final_in += binary_line;
+                }
+                linea_final_in = linea_final_in.substr(0, linea_final_in.size() - ceros_pack);
+                std::map<char, std::vector<int>> HuffmanOutMap = huff_2.MapHuffman();
+                auto iterHuff = HuffmanOutMap.begin();
+                std::string fin_aux = linea_final_in;
+                std::string fin_real = "";
+                std::map<std::string, char> map_reversed;
+                for (auto it__ = HuffmanOutMap.begin(); it__ != HuffmanOutMap.end(); ++it__) {
+                    std::vector<int> vect_temp;
+                    vect_temp = it__->second;
+                    auto it_vec = vect_temp.begin();
+                    std::string new_trace = "";
+                    while (it_vec != vect_temp.end()) {
+                        new_trace += std::to_string(*it_vec);
+                        ++it_vec;
+                    }
+                    map_reversed[new_trace] = it__->first;
+                }
+                while (fin_aux.size() > 0) {
+                    std::string check_str = "";
+                    bool bandera = false;
+                    while (!bandera) {
+                        check_str += fin_aux.substr(0, 1);
+                        fin_aux = fin_aux.substr(1, fin_aux.size());
+                        if (map_reversed.count(check_str)) {
+                            fin_real.push_back(map_reversed[check_str]);
+                            bandera = true;
+                            check_str = "";
+                        }
+                    }
+                }
+                linea_final_in = fin_real;
+                lista_filas.push_back(linea_final_in);
+            }
+            secuencia_in.ActualizarListaSecuencia(lista_filas);
+            secuencia_in.ActualizarLongitud(longitud_lineas);
+            list_secuencias_in.push_back(secuencia_in);
+            archivo_vacio = false;
+        }
+        lista_archivo_secuencias_ = list_secuencias_in;
     }
 
 
