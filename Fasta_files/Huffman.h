@@ -25,7 +25,7 @@ private:
         struct HuffmanNode **array_;
     };
 
-    struct HuffmanNode *nuevoNodo(char codigo, unsigned frecuencia) {
+    static struct HuffmanNode *nuevoNodo(char codigo, unsigned frecuencia) {
         struct HuffmanNode *temp;
         temp = (struct HuffmanNode *) malloc(sizeof(struct HuffmanNode));
         temp->left = temp->right = nullptr;
@@ -34,7 +34,7 @@ private:
         return temp;
     }
 
-    struct MinHeap *nuevoMinHeap(unsigned capacidad) {
+    static struct MinHeap *nuevoMinHeap(unsigned capacidad) {
         struct MinHeap *minHeap;
         minHeap = (struct MinHeap *) malloc(sizeof(struct MinHeap));
         minHeap->size_ = 0;
@@ -43,7 +43,7 @@ private:
         return minHeap;
     }
 
-    void swapHuffmanNode(struct HuffmanNode **a, struct HuffmanNode **b) {
+    static void swapHuffmanNode(struct HuffmanNode **a, struct HuffmanNode **b) {
         struct HuffmanNode *t = *a;
         *a = *b;
         *b = t;
@@ -69,7 +69,7 @@ private:
         }
     }
 
-    int isSizeOne(struct MinHeap *minHeap) {
+    static int isSizeOne(struct MinHeap *minHeap) {
         return (minHeap->size_ == 1);
     }
 
@@ -81,7 +81,7 @@ private:
         return temp;
     }
 
-    void insertMinHeap(struct MinHeap *minHeap, struct HuffmanNode *huffmanNode) {
+    static void insertMinHeap(struct MinHeap *minHeap, struct HuffmanNode *huffmanNode) {
         ++minHeap->size_;
         int i = minHeap->size_ - 1;
         while (i && huffmanNode->frecuencia_ < minHeap->array_[(i - 1) / 2]->frecuencia_) {
@@ -99,7 +99,7 @@ private:
         }
     }
 
-    int isLeaf(struct HuffmanNode *root) {
+    static int isLeaf(struct HuffmanNode *root) {
         return !(root->left) && !(root->right);
     }
 

@@ -17,10 +17,15 @@ namespace archivo_secuencia {
     ArchivoSecuencia<T, V>::ArchivoSecuencia() = default;
 
     template<class T, class V>
-    ArchivoSecuencia<T, V>::ArchivoSecuencia(const std::string &nombre_archivo) {
+    ArchivoSecuencia<T, V>::ArchivoSecuencia(std::string &nombre_archivo) {
         nombre_archivo_ = nombre_archivo;
+        std::string check_nombre_archivo;
+        check_nombre_archivo = nombre_archivo.substr(nombre_archivo.size() - 4);
+        if (check_nombre_archivo != ".txt") {
+            nombre_archivo += ".txt";
+        }
         std::cout << this->nombre_archivo_ << std::endl;
-        std::ifstream archivo_lectura(nombre_archivo_);
+        std::ifstream archivo_lectura(nombre_archivo);
         _secuencia::Secuencia<V> secuencia_entrada2;
         bool last = false;
         bool check_pass = archivo_lectura.good();
@@ -62,7 +67,6 @@ namespace archivo_secuencia {
                             secuencia_entrada.CrearGrafo();
                             lista_entrada.push_back(secuencia_entrada);
                             this->cantidad_sec_ += 1;
-                            last = true;
                         }
                     }
 
@@ -96,11 +100,22 @@ namespace archivo_secuencia {
 
     template<class T, class V>
     void ArchivoSecuencia<T, V>::Imprimir() {
-        std::list<_secuencia::Secuencia<int>>::iterator it;
-        it = this->lista_archivo_secuencias_.begin();
-        for (; it != this->lista_archivo_secuencias_.end(); ++it) {
-            std::cout << it->NombreSecuencia() << std::endl;
-            it->Lineas();
+        std::cout << "Archivo: " << nombre_archivo_ << std::endl;
+        std::cout << "Cantidad de secuencias en el archivo: " << cantidad_sec_ << std::endl;
+        std::cout << "N distintas bases que contiene el archivo (de 18): " << cantidad_bases_archivo_ << std::endl;
+        std::cout << "Huffman cargado: " << std::endl;
+        for (auto huffmap: mapa_) {
+            std::vector<int> vec_huff;
+            vec_huff = huffmap.second;
+            std::cout << huffmap.first << " : ";
+            for (auto veciter: vec_huff) {
+                std::cout << veciter;
+            }
+            std::cout << std::endl;
+        }
+        std::cout << "Frecuencias cargadas: " << std::endl;
+        for (auto freqmap: mapa_freq_) {
+            std::cout << freqmap.first << " : " << freqmap.second << std::endl;
         }
     }
 
@@ -190,7 +205,7 @@ namespace archivo_secuencia {
     }
 
     template<class T, class V>
-    int ArchivoSecuencia<T, V>::Enmascarar(std::string mascara, std::string enmascara) {
+    int ArchivoSecuencia<T, V>::Enmascarar(const std::string &mascara, std::string enmascara) {
         int contador = EsSubsecuencia(enmascara);
         typename std::list<_secuencia::Secuencia<V>>::iterator it;
         std::list<std::string>::iterator its;
@@ -275,6 +290,11 @@ namespace archivo_secuencia {
 
     template<class T, class V>
     void ArchivoSecuencia<T, V>::alistadorSaveFile(std::string nombre_archivo) {
+        std::string check_nombre_archivo;
+        check_nombre_archivo = nombre_archivo.substr(nombre_archivo.size() - 4);
+        if (check_nombre_archivo != ".bin") {
+            nombre_archivo += ".bin";
+        }
         std::ofstream outputBIN(nombre_archivo, std::ios::out | std::ios::binary);
         int16_t bases_int_ = this->cantidad_bases_archivo_;
         outputBIN.write(reinterpret_cast<const char *>(&bases_int_), sizeof(bases_int_));
@@ -301,8 +321,7 @@ namespace archivo_secuencia {
             int longitud_nombre = nombre_temp.length();
             int16_t longitud_nombre_ = longitud_nombre;
             outputBIN.write(reinterpret_cast<const char *>(&longitud_nombre_), sizeof(longitud_nombre_));
-            for (auto it3 = nombre_temp.begin(); it3 != nombre_temp.end(); ++it3) {
-                char char_nombre = *it3;
+            for (char char_nombre: nombre_temp) {
                 outputBIN.write(reinterpret_cast<const char *>(&char_nombre), sizeof(char_nombre));
             }
             int64_t longitud_ = listiterator->longitud_max();
@@ -316,9 +335,9 @@ namespace archivo_secuencia {
                 int16_t ceros_ = 0;
                 std::string linea_in = *secuenciait;
                 int N = linea_in.size();
-                int j = 0, i = 0;
+                int j = 0;
                 std::vector<std::string> result;
-                std::string res = "";
+                std::string res;
                 while (j < N) {
                     res += linea_in[j];
                     if (res.size() == 63) {
@@ -328,7 +347,7 @@ namespace archivo_secuencia {
                     }
                     j++;
                 }
-                if (res != "") {
+                if (!res.empty()) {
                     while (res.size() < 63) {
                         res += "0";
                         ceros_++;
@@ -350,8 +369,13 @@ namespace archivo_secuencia {
     }
 
     template<class T, class V>
-    ArchivoSecuencia<T, V>::ArchivoSecuencia(const std::string &nombre_archivo, const int &bin_opcion) {
+    ArchivoSecuencia<T, V>::ArchivoSecuencia(std::string &nombre_archivo, const int &bin_opcion) {
         nombre_archivo_ = nombre_archivo;
+        std::string check_nombre_archivo;
+        check_nombre_archivo = nombre_archivo.substr(nombre_archivo.size() - 4);
+        if (check_nombre_archivo != ".bin") {
+            nombre_archivo += ".bin";
+        }
         std::ifstream infile(nombre_archivo, std::ios::in | std::ios::binary);
         int16_t cantidad_bases_in = 0;
         infile.read((char *) &cantidad_bases_in, sizeof(cantidad_bases_in));
@@ -414,21 +438,21 @@ namespace archivo_secuencia {
                 std::map<char, std::vector<int>> HuffmanOutMap = huff_2.MapHuffman();
                 auto iterHuff = HuffmanOutMap.begin();
                 std::string fin_aux = linea_final_in;
-                std::string fin_real = "";
+                std::string fin_real;
                 std::map<std::string, char> map_reversed;
-                for (auto it__ = HuffmanOutMap.begin(); it__ != HuffmanOutMap.end(); ++it__) {
+                for (auto &it__: HuffmanOutMap) {
                     std::vector<int> vect_temp;
-                    vect_temp = it__->second;
+                    vect_temp = it__.second;
                     auto it_vec = vect_temp.begin();
-                    std::string new_trace = "";
+                    std::string new_trace;
                     while (it_vec != vect_temp.end()) {
                         new_trace += std::to_string(*it_vec);
                         ++it_vec;
                     }
-                    map_reversed[new_trace] = it__->first;
+                    map_reversed[new_trace] = it__.first;
                 }
-                while (fin_aux.size() > 0) {
-                    std::string check_str = "";
+                while (!fin_aux.empty()) {
+                    std::string check_str;
                     bool bandera = false;
                     while (!bandera) {
                         check_str += fin_aux.substr(0, 1);
