@@ -2,13 +2,13 @@
 // Created by Juan Salazar on 30/09/22.
 //
 #include <iostream>
-#include "ArchivoSecuencia.cpp"
+#include "FASTAFileClass.cpp"
 
 int main() {
 
     std::cout << "Hello World! Zarzamora  .... " << std::endl;
     std::list<std::string> lista_nombres_;
-    std::list<archivo_secuencia::ArchivoSecuencia<_secuencia::Secuencia<int>, int>> lista_archivos_;
+    std::list<FastaFile::FASTAFileClass> lista_archivos_;
     std::cout << R"(
 ________ ________  ________  _________  ________          ________  ________  ________        ___  _______   ________ _________
 |\  _____\\   __  \|\   ____\|\___   ___\\   __  \        |\   __  \|\   __  \|\   __  \      |\  \|\  ___ \ |\   ____\\___   ___\
@@ -35,7 +35,7 @@ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\
 | |\/| _  _                                                               |
 | |  |(/_| ||_|                                                           |
 +───────+─────────────────────────────────────────────────────────────────+
-| 1.    | Cargar un archivo .txt con información genetica.                |
+| 1.    | Cargar un archivo .fa con información genetica.                |
 | 2.    | Cargar un archivo .bin con información genética comprimida.     |
 | 3.    | Ver archivos genéticos cargados en memoria                      |
 | 4.    | Exportar un archivo genético cargado en memoria                 |
@@ -59,7 +59,7 @@ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\
                 std::cin >> nombre_temp;
                 std::cout << "Analizando... " << std::endl;
                 lista_nombres_.push_back(nombre_temp);
-                archivo_secuencia::ArchivoSecuencia<_secuencia::Secuencia<int>, int> ArchivoTemp(nombre_temp, 1);
+                FastaFile::FASTAFileClass ArchivoTemp(nombre_temp, 1);
                 std::cout << "Archivo decodificado con éxito" << std::endl;
                 lista_archivos_.push_back(ArchivoTemp);
                 std::cout << "Archivo cargado con éxito en la memoria!" << std::endl;
@@ -72,9 +72,10 @@ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\
                 std::cin >> nombre_temp;
                 std::cout << "Creando información..." << std::endl;
                 lista_nombres_.push_back(nombre_temp);
-                archivo_secuencia::ArchivoSecuencia<_secuencia::Secuencia<int>, int> ArchivoTemp(nombre_temp);
+                FastaFile::FASTAFileClass ArchivoTemp(nombre_temp);
                 lista_archivos_.push_back(ArchivoTemp);
                 std::cout << "Archivo cargado con éxito!" << std::endl;
+                ArchivoTemp.FastaGraphmaker();
                 break;
             }
             case '3': {
@@ -91,8 +92,8 @@ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\
                 std::cin >> nombre_temp;
                 for (auto &archivo: lista_archivos_) {
                     if (archivo.NombreArchivo() == nombre_temp) {
-                        nombre_temp = nombre_temp + "_export";
-                        archivo.ExportarTxt(nombre_temp);
+                        nombre_temp += +"_export";
+                        archivo.exportLegible();
                         std::cout << "Archivo exportado con éxito!" << std::endl;
                         break;
                     }
@@ -105,7 +106,7 @@ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\
                 std::cin >> nombre_temp;
                 for (auto &archivo: lista_archivos_) {
                     if (archivo.NombreArchivo() == nombre_temp) {
-                        archivo.Imprimir();
+                        archivo.printInformation();
                         break;
                     }
                 }
@@ -117,10 +118,10 @@ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\
                 std::cin >> nombre_temp;
                 for (auto &archivo: lista_archivos_) {
                     if (archivo.NombreArchivo() == nombre_temp) {
-                        nombre_temp = nombre_temp + "_BIN_EXPORT";
-                        archivo_secuencia::ArchivoSecuencia<_secuencia::Secuencia<int>, int> ArchivoTemp(archivo);
+                        nombre_temp += +"_BIN_EXPORT";
+                        FastaFile::FASTAFileClass ArchivoTemp(archivo);
                         ArchivoTemp.HuffmanEncodder();
-                        ArchivoTemp.alistadorSaveFile(nombre_temp);
+                        ArchivoTemp.compressFile(nombre_temp);
                         std::cout << "Archivo comprimido y exportado!" << std::endl;
                         break;
                     }
@@ -151,6 +152,7 @@ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\ $$$$\
                 }
 
             }
+
         }
     }
     return 0;

@@ -151,7 +151,7 @@ private:
         }
     }
 
-    void printArr(int arr[], int n) {
+    static void printArr(int arr[], int n) {
         int i;
         for (i = 0; i < n; ++i) {
             std::cout << arr[i];
